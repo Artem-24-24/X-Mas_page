@@ -42,10 +42,6 @@ class App {
         this.renderer.setAnimationLoop(this.render.bind(this));
     }
 
-    random(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
     initScene() {
         this.room = new THREE.LineSegments(
             new BoxLineGeometry(6, 6, 6, 10, 10, 10),
@@ -79,13 +75,16 @@ class App {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    render(time, frame) {
+    render() {
         if (this.renderer.xr.isPresenting) {
             const session = this.renderer.xr.getSession();
             const inputSources = session.inputSources;
 
-            this.counter =+ this.clock.getDelta()
-            if (this.counter)
+            this.counter += this.clock.getDelta()
+            if (this.counter > .2) {
+                this.getInputSources = true
+                this.counter = 0
+            }
             if (this.getInputSources) {
                 const info = [];
 
@@ -94,14 +93,14 @@ class App {
                     const axes = gp.axes;
                     const buttons = gp.buttons;
                     const mapping = gp.mapping;
-                    this.useStandard = (mapping == 'xr-standard');
+                    this.useStandard = (mapping === 'xr-standard');
                     const gamepad = {axes, buttons, mapping};
                     const handedness = inputSource.handedness;
                     const profiles = inputSource.profiles;
                     this.type = "";
                     profiles.forEach(profile => {
-                        if (profile.indexOf('touchpad') != -1) this.type = 'touchpad';
-                        if (profile.indexOf('thumbstick') != -1) this.type = 'thumbstick';
+                        if (profile.indexOf('touchpad') !== -1) this.type = 'touchpad';
+                        if (profile.indexOf('thumbstick') !== -1) this.type = 'thumbstick';
                     });
                     const targetRayMode = inputSource.targetRayMode;
                     info.push({gamepad, handedness, profiles, targetRayMode});
@@ -110,18 +109,18 @@ class App {
                 console.log(JSON.stringify(info));
 
                 this.getInputSources = false;
-            } else if (this.useStandard && this.type != "") {
+            } else if (this.useStandard && this.type !== "") {
                 inputSources.forEach(inputSource => {
                     const gp = inputSource.gamepad;
-                    const thumbstick = (this.type == 'thumbstick');
+                    const thumbstick = (this.type === 'thumbstick');
                     const offset = (thumbstick) ? 2 : 0;
                     const btnIndex = (thumbstick) ? 3 : 2;
                     const btnPressed = gp.buttons[btnIndex].pressed;
                     const material = (btnPressed) ? this.materials[1] : this.materials[0];
-                    if (inputSource.handedness == 'right') {
+                    if (inputSource.handedness === 'right') {
                         this.rsphere.position.set(0.5, 1.6, -1).add(this.vec3.set(gp.axes[offset], -gp.axes[offset + 1], 0));
                         this.rsphere.material = material;
-                    } else if (inputSource.handedness == 'left') {
+                    } else if (inputSource.handedness === 'left') {
                         this.lsphere.position.set(-0.5, 1.6, -1).add(this.vec3.set(gp.axes[offset], -gp.axes[offset + 1], 0));
                         this.lsphere.material = material;
                     }
