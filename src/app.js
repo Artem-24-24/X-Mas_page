@@ -4,7 +4,10 @@ import {BoxLineGeometry} from "three/addons/geometries/BoxLineGeometry";
 import House from "../assets/Houseinball.glb"
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 import {XRControllerModelFactory} from "three/examples/jsm/webxr/XRControllerModelFactory";
+import tree from "../assets/Tree.glb"
+import axe from "../assets/axe.glb"
 
+const axePosition = {x: 0, y: 1.6, z: -1, scale: .5}
 
 class App {
     constructor() {
@@ -12,6 +15,8 @@ class App {
         document.body.appendChild(container);
 
         this.controllers = []
+
+        this.counter = 0;
 
         this.clock = new THREE.Clock();
 
@@ -48,19 +53,39 @@ class App {
         this.renderer.setAnimationLoop(this.render.bind(this));
     }
 
-    loadAsset(glbObject, x, y, z, sceneHandler) {
-        const self = this
-        const loader = new GLTFLoader()
-        loader.load(glbObject, (gltf) => {
-                const gltfScene = gltf.scene
-                self.scene.add(gltfScene)
-                gltfScene.position.set(x, y, z)
-                if (sceneHandler) {
-                    sceneHandler(gltfScene)
-                }
-            },
-            null,
-            (error) => console.error(`An error happened: ${error}`))
+    createButtonStates(components) {
+        const buttonStates = {}
+        this.gamepadIndices = components
+        Object.keys(components).forEach(key => {
+            if (key.includes('touchpad') || key.includes('thumbstick')) {
+                buttonStates[key] = {button: 0, xAxis: 0, yAxis: 0}
+            } else {
+                buttonStates[key] = 0
+            }
+        })
+        this.buttonStates = buttonStates
+    }
+
+    controllerAction(dt) {
+        if (!this.renderer.xr.isPresenting && this.controllers.length === 0) {
+            return
+        }
+
+        if (this.rsphere && this.controllers[0].buttonStates) {
+            const buttonStates = this.controllers[0].buttonStates
+            if (buttonStates["xr_standard_thumbstick"].button) {
+                const scale = 10
+                this.rsphere.scale.set(scale, scale, scale)
+            } else if (this.rsphere) {
+                const scale = 5
+                this.rsphere.scale.set(scale, scale, scale,)
+            }
+            const xAxis = buttonStates["xr_standard_thumbstick"].xAxis
+            const yAxis = buttonStates["xr_standard_thumbstick"].yAxis
+            House.rotateY(0.1 * xAxis)
+            House.translateY(.02 * yAxis)
+        }
+
     }
 
 
@@ -83,11 +108,56 @@ class App {
 
         this.room.geometry.translate(0, 3, 0);
         this.scene.add(this.room);
+        const self = this
+
+        this.loadAsset(House, .5, .1, .1, scene => {
+            const scale = 5
+            scene.scale.set(scale, scale, scale)
+            self.House = scene
+        })
+
+
+        this.loadAsset(axe, 0, 1.6, -1,  scene => {
+            const scale = .5
+            scene.scale.set(scale, scale, scale)
+            self.axe = scene
+        })
+
+    }
+    loadAsset(glbObject, x, y, z, sceneHandler) {
+        const self = this
+        const loader = new GLTFLoader()
+        loader.load(glbObject, (gltf) => {
+                const gltfScene = gltf.scene
+                self.scene.add(gltfScene)
+                gltfScene.position.set(x, y, z)
+                if (sceneHandler) {
+                    sceneHandler(gltfScene)
+                }
+            },
+            null,
+            (error) => console.error(`An error happened: ${error}`))
     }
 
     setupXR() {
         this.renderer.xr.enabled = true;
 
+        const gripRight = this.renderer.xr.getControllerGrip(0)
+        gripRight.add(new XRControllerModelFactory().createControllerModel(gripRight))
+        this.scene.add(gripRight)
+
+        const gripLeft = this.renderer.xr.getControllerGrip(1)
+        gripLeft.add(new XRControllerModelFactory().createControllerModel(gripLeft))
+        this.scene.add(gripLeft)
+
+        // Add events
+        const self = this
+        gripRight.addEventListener('squeezestart', () => {
+            // Reset position
+            const scale = axePosition.scale
+            self.axe.scale.set(scale, scale, scale)
+            self.axe.position.set(axePosition.x, axePosition.y, axePosition.z)
+        })
         document.body.appendChild(VRButton.createButton(this.renderer));
     }
 
@@ -98,7 +168,6 @@ class App {
     }
 
     render() {
-        const dt = this.clock.getDelta()
         if (this.renderer.xr.isPresenting) {
             const session = this.renderer.xr.getSession();
             const inputSources = session.inputSources;
@@ -155,32 +224,34 @@ class App {
             }
         }
         this.renderer.render(this.scene, this.camera);
-        this.controllerAction(dt)
+
     }
 
     rightStick(deltaX, deltaY, buttonPressed) {
-        if (this.snowman && buttonPressed) {
-            // Zoom model
-            const currentScale = this.snowman.scale.x
+        if (axe && buttonPressed) {
+            // Zoom models
+            const currentScale = this.axe.scale.x
             let scale
             if (currentScale >= 1) {
                 scale = currentScale - .1 * deltaY
             } else {
                 scale = 1 / (1 / currentScale + .1 * deltaY)
             }
-            this.snowman.scale.set(scale, scale, scale)
-        } else if(this.snowman) {
+            this.axe.scale.set(scale, scale, scale)
+
+        } else if(this.axe) {
             // Rotate model
-            this.snowman.rotateY(Math.PI / 180 * 10 * deltaX)
-            this.snowman.rotateZ(Math.PI / 180 * 10 * deltaY)
+            this.axe.rotateY(Math.PI / 180 * 10 * deltaX)
+            this.axe.rotateZ(Math.PI / 180 * 10 * deltaY)
         }
     }
 
     leftStick(deltaX, deltaY, buttonPressed) {
-        if (this.snowman && buttonPressed) {
-
-        } else if(this.snowman) {
-            this.snowman.position.add(this.vec3.set(.05 * deltaX, 0, .05 * deltaY))
+        if (this.axe && buttonPressed) {
+           // this.axe.translateY(+.01)
+            this.axe.position.add(this.vec3.set(.05 * deltaX, .05 * deltaY, 0))
+        } else if(this.axe) {
+            this.axe.position.add(this.vec3.set(.05 * deltaX, 0, .05 * deltaY))
         }
     }
 }
