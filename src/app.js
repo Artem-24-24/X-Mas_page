@@ -14,7 +14,7 @@ class App {
         this.controllers = []
 
         this.clock = new THREE.Clock();
-        this.counter = 0;
+
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
         this.camera.position.set(0, 1.6, 0);
 
@@ -65,10 +65,10 @@ class App {
 
 
     initScene() {
-        // this.room = new THREE.LineSegments(
-        //     new BoxLineGeometry(6, 6, 6, 10, 10, 10),
-        //     new THREE.LineBasicMaterial({color: 0x808080})
-        // );
+        this.room = new THREE.LineSegments(
+            new BoxLineGeometry(6, 6, 6, 10, 10, 10),
+            new THREE.LineBasicMaterial({color: 0x808080})
+        );
 
         const geo1 = new THREE.SphereBufferGeometry(0.1, 16, 8);
         const mat1 = new THREE.MeshStandardMaterial({color: 0x3333ff});
@@ -81,68 +81,14 @@ class App {
         this.lsphere.position.set(-0.5, 1.6, -1);
         this.scene.add(this.lsphere);
 
-        // this.room.geometry.translate(0, 3, 0);
-        // this.scene.add(this.room);
-
-        const self = this
-
-        this.loadAsset(House, .5, .1, .1, scene => {
-            const scale = 5
-            scene.scale.set(scale, scale, scale)
-            self.House = scene
-        })
+        this.room.geometry.translate(0, 3, 0);
+        this.scene.add(this.room);
     }
 
     setupXR() {
         this.renderer.xr.enabled = true;
 
-        const controllerModelFactory = new XRControllerModelFactory();
-
-
-        const controller1 = this.renderer.xr.getControllerGrip(0);
-        controller1.add(controllerModelFactory.createControllerModel(controller1));
-        this.scene.add(controller1);
-
-        const controller2 = this.renderer.xr.getControllerGrip(1);
-        controller2.add(controllerModelFactory.createControllerModel(controller2));
-        this.scene.add(controller2);
-
         document.body.appendChild(VRButton.createButton(this.renderer));
-    }
-
-    createButtonStates(components) {
-        const buttonStates = {}
-        this.gamepadIndices = components
-        Object.keys(components).forEach(key => {
-            if (key.includes('touchpad') || key.includes('thumbstick')) {
-                buttonStates[key] = {button: 0, xAxis: 0, yAxis: 0}
-            } else {
-                buttonStates[key] = 0
-            }
-        })
-        this.buttonStates = buttonStates
-    }
-
-    controllerAction(dt) {
-        if (!this.renderer.xr.isPresenting && this.controllers.length === 0) {
-            return
-        }
-
-        if (this.rsphere && this.controllers[0].buttonStates) {
-            const buttonStates = this.controllers[0].buttonStates
-            if (buttonStates["xr_standard_thumbstick"].button) {
-                const scale = 10
-                this.rsphere.scale.set(scale, scale, scale)
-            } else if (this.rsphere) {
-                const scale = 5
-                this.rsphere.scale.set(scale, scale, scale,)
-            }
-            const xAxis = buttonStates["xr_standard_thumbstick"].xAxis
-            const yAxis = buttonStates["xr_standard_thumbstick"].yAxis
-            House.rotateY(0.1 * xAxis)
-            House.translateY(.02 * yAxis)
-        }
-
     }
 
     resize() {
@@ -194,18 +140,48 @@ class App {
                     const btnIndex = (thumbstick) ? 3 : 2;
                     const btnPressed = gp.buttons[btnIndex].pressed;
                     const material = (btnPressed) ? this.materials[1] : this.materials[0];
+                    const deltaX = gp.axes[offset]
+                    const deltaY = gp.axes[offset + 1]
                     if (inputSource.handedness === 'right') {
                         this.rsphere.position.set(0.5, 1.6, -1).add(this.vec3.set(gp.axes[offset], -gp.axes[offset + 1], 0));
                         this.rsphere.material = material;
+                        this.rightStick(deltaX, deltaY, btnPressed)
                     } else if (inputSource.handedness === 'left') {
                         this.lsphere.position.set(-0.5, 1.6, -1).add(this.vec3.set(gp.axes[offset], -gp.axes[offset + 1], 0));
                         this.lsphere.material = material;
+                        this.leftStick(deltaX, deltaY, btnPressed)
                     }
                 })
             }
         }
         this.renderer.render(this.scene, this.camera);
         this.controllerAction(dt)
+    }
+
+    rightStick(deltaX, deltaY, buttonPressed) {
+        if (this.snowman && buttonPressed) {
+            // Zoom model
+            const currentScale = this.snowman.scale.x
+            let scale
+            if (currentScale >= 1) {
+                scale = currentScale - .1 * deltaY
+            } else {
+                scale = 1 / (1 / currentScale + .1 * deltaY)
+            }
+            this.snowman.scale.set(scale, scale, scale)
+        } else if(this.snowman) {
+            // Rotate model
+            this.snowman.rotateY(Math.PI / 180 * 10 * deltaX)
+            this.snowman.rotateZ(Math.PI / 180 * 10 * deltaY)
+        }
+    }
+
+    leftStick(deltaX, deltaY, buttonPressed) {
+        if (this.snowman && buttonPressed) {
+
+        } else if(this.snowman) {
+            this.snowman.position.add(this.vec3.set(.05 * deltaX, 0, .05 * deltaY))
+        }
     }
 }
 
