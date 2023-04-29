@@ -1,0 +1,54 @@
+{
+  "icons": [
+    {
+      "src": "auto/icon_192x192.ba17d5c9d910ca1405cd27fe484a2077.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "auto/icon_512x512.878d69dc6d1a1de31b85c102ecc9ef6c.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "auto/icon_192x192.ba17d5c9d910ca1405cd27fe484a2077.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "auto/icon_144x144.2649c9a037ab1154e04eebc62c3bf2e3.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "auto/icon_96x96.9ffaf70cedbdfa58f4540f589e611b89.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "auto/icon_72x72.eadcce1126e8a5e9a885e2f047021b47.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "auto/icon_48x48.ec82026c3170be1182578bc106d56c82.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "name": "WebXR PWA Example",
+  "short_name": "WebXRPWA",
+  "orientation": "portrait",
+  "display": "standalone",
+  "start_url": ".",
+  "description": "WebXR PWA Example for factory environment",
+  "background_color": "#fff",
+  "theme_color": "#4d0"
+}
