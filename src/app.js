@@ -82,8 +82,8 @@ class App {
             }
             const xAxis = buttonStates["xr_standard_thumbstick"].xAxis
             const yAxis = buttonStates["xr_standard_thumbstick"].yAxis
-            House.rotateY(0.1 * xAxis)
-            House.translateY(.02 * yAxis)
+           // House.rotateY(0.1 * xAxis)
+           // House.translateY(.02 * yAxis)
         }
 
     }
@@ -110,12 +110,12 @@ class App {
         this.scene.add(this.room);
         const self = this
 
-        this.loadAsset(House, .5, .1, .1, scene => {
-            const scale = 5
+
+        this.loadAsset(House, 0, 1.6, -1,  scene => {
+            const scale = .5
             scene.scale.set(scale, scale, scale)
             self.House = scene
         })
-
 
         this.loadAsset(axe, 0, 1.6, -1,  scene => {
             const scale = .5
